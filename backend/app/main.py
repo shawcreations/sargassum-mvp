@@ -1,19 +1,40 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import sargassum
+from .config import settings
+from .routers import auth_router, beaches_router, campaigns_router, tasks_router, ai_router
 
-app = FastAPI(title="Sargassum MVP API")
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="API for Sargassum monitoring and cleanup management",
+    version="1.0.0"
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def root():
-    return {"status": "OK", "message": "Sargassum MVP API Running"}
+    return {
+        "status": "OK",
+        "message": "Sargassum MVP API Running",
+        "version": "1.0.0"
+    }
 
-app.include_router(sargassum.router, prefix="/sargassum")
 
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+
+# Include routers
+app.include_router(auth_router)
+app.include_router(beaches_router)
+app.include_router(campaigns_router)
+app.include_router(tasks_router)
+app.include_router(ai_router)
