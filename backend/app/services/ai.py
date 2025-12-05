@@ -1,44 +1,41 @@
-import uuid
-from typing import Optional
 from ..config import settings
 
 
 class AIService:
     """
-    AI Service stub for OpenAI integration.
-    Replace with actual OpenAI calls when ready.
+    AI Service for OpenAI integration.
     """
     
     @staticmethod
-    def generate_response(message: str, conversation_id: Optional[str] = None) -> dict:
+    def generate_response(message: str) -> str:
         """
-        Stub implementation - returns predefined responses.
-        TODO: Integrate with OpenAI API
+        Generate AI response using OpenAI if API key is available.
         """
-        if not conversation_id:
-            conversation_id = str(uuid.uuid4())
+        if not settings.OPENAI_API_KEY:
+            return "This is a stub AI response because OPENAI_API_KEY is not set."
         
-        # Predefined responses for demo
-        responses = {
-            "hello": "Hello! I'm your Sargassum monitoring assistant. How can I help you today?",
-            "help": "I can help you with:\n- Checking sargassum levels at beaches\n- Managing cleanup campaigns\n- Analyzing trends and patterns\n- Coordinating volunteer efforts\n\nWhat would you like to know?",
-            "status": "Current sargassum status:\n- High risk: 2 beaches\n- Medium risk: 5 beaches\n- Low risk: 8 beaches\n\nWould you like more details about any specific beach?",
-            "default": f"I understand you're asking about: '{message}'\n\nThis is a demo response. In production, I'll be connected to OpenAI to provide intelligent assistance for sargassum monitoring and management."
-        }
-        
-        message_lower = message.lower()
-        
-        if "hello" in message_lower or "hi" in message_lower:
-            response = responses["hello"]
-        elif "help" in message_lower:
-            response = responses["help"]
-        elif "status" in message_lower:
-            response = responses["status"]
-        else:
-            response = responses["default"]
-        
-        return {
-            "response": response,
-            "conversation_id": conversation_id
-        }
-
+        try:
+            from openai import OpenAI
+            
+            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an assistant helping Vincy GreenRoots plan sargassum operations. You help with beach cleanup scheduling, campaign management, task coordination, and provide advice on sargassum management best practices."
+                    },
+                    {
+                        "role": "user",
+                        "content": message
+                    }
+                ],
+                max_tokens=1000,
+                temperature=0.7
+            )
+            
+            return response.choices[0].message.content
+            
+        except Exception as e:
+            return f"Error calling OpenAI API: {str(e)}"

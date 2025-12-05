@@ -1,15 +1,14 @@
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 
 class CampaignBase(BaseModel):
     name: str
     description: Optional[str] = None
-    beach_id: Optional[int] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    volunteers_needed: Optional[int] = 0
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    status: Optional[str] = "planned"
 
 
 class CampaignCreate(CampaignBase):
@@ -19,21 +18,14 @@ class CampaignCreate(CampaignBase):
 class CampaignUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     status: Optional[str] = None
-    beach_id: Optional[int] = None
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    volunteers_needed: Optional[int] = None
-    volunteers_registered: Optional[int] = None
 
 
-class CampaignResponse(CampaignBase):
+class CampaignRead(CampaignBase):
     id: int
-    status: str
-    coordinator_id: Optional[int] = None
-    volunteers_registered: int
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-

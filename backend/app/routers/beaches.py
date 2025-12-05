@@ -2,19 +2,19 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..schemas.beach import BeachCreate, BeachUpdate, BeachResponse
+from ..schemas.beach import BeachCreate, BeachUpdate, BeachRead
 from ..models.beach import Beach
 
-router = APIRouter(prefix="/beaches", tags=["Beaches"])
+router = APIRouter(tags=["Beaches"])
 
 
-@router.get("/", response_model=List[BeachResponse])
+@router.get("/beaches", response_model=List[BeachRead])
 def get_beaches(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     beaches = db.query(Beach).offset(skip).limit(limit).all()
     return beaches
 
 
-@router.get("/{beach_id}", response_model=BeachResponse)
+@router.get("/beaches/{beach_id}", response_model=BeachRead)
 def get_beach(beach_id: int, db: Session = Depends(get_db)):
     beach = db.query(Beach).filter(Beach.id == beach_id).first()
     if not beach:
@@ -22,7 +22,7 @@ def get_beach(beach_id: int, db: Session = Depends(get_db)):
     return beach
 
 
-@router.post("/", response_model=BeachResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/beaches", response_model=BeachRead, status_code=status.HTTP_201_CREATED)
 def create_beach(beach: BeachCreate, db: Session = Depends(get_db)):
     db_beach = Beach(**beach.model_dump())
     db.add(db_beach)
@@ -31,7 +31,7 @@ def create_beach(beach: BeachCreate, db: Session = Depends(get_db)):
     return db_beach
 
 
-@router.put("/{beach_id}", response_model=BeachResponse)
+@router.put("/beaches/{beach_id}", response_model=BeachRead)
 def update_beach(beach_id: int, beach: BeachUpdate, db: Session = Depends(get_db)):
     db_beach = db.query(Beach).filter(Beach.id == beach_id).first()
     if not db_beach:
@@ -46,7 +46,7 @@ def update_beach(beach_id: int, beach: BeachUpdate, db: Session = Depends(get_db
     return db_beach
 
 
-@router.delete("/{beach_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/beaches/{beach_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_beach(beach_id: int, db: Session = Depends(get_db)):
     db_beach = db.query(Beach).filter(Beach.id == beach_id).first()
     if not db_beach:
@@ -55,4 +55,3 @@ def delete_beach(beach_id: int, db: Session = Depends(get_db)):
     db.delete(db_beach)
     db.commit()
     return None
-

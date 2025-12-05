@@ -2,19 +2,19 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..schemas.campaign import CampaignCreate, CampaignUpdate, CampaignResponse
+from ..schemas.campaign import CampaignCreate, CampaignUpdate, CampaignRead
 from ..models.campaign import Campaign
 
-router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
+router = APIRouter(tags=["Campaigns"])
 
 
-@router.get("/", response_model=List[CampaignResponse])
+@router.get("/campaigns", response_model=List[CampaignRead])
 def get_campaigns(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     campaigns = db.query(Campaign).offset(skip).limit(limit).all()
     return campaigns
 
 
-@router.get("/{campaign_id}", response_model=CampaignResponse)
+@router.get("/campaigns/{campaign_id}", response_model=CampaignRead)
 def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
     campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
     if not campaign:
@@ -22,7 +22,7 @@ def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
     return campaign
 
 
-@router.post("/", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/campaigns", response_model=CampaignRead, status_code=status.HTTP_201_CREATED)
 def create_campaign(campaign: CampaignCreate, db: Session = Depends(get_db)):
     db_campaign = Campaign(**campaign.model_dump())
     db.add(db_campaign)
@@ -31,7 +31,7 @@ def create_campaign(campaign: CampaignCreate, db: Session = Depends(get_db)):
     return db_campaign
 
 
-@router.put("/{campaign_id}", response_model=CampaignResponse)
+@router.put("/campaigns/{campaign_id}", response_model=CampaignRead)
 def update_campaign(campaign_id: int, campaign: CampaignUpdate, db: Session = Depends(get_db)):
     db_campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
     if not db_campaign:
@@ -46,7 +46,7 @@ def update_campaign(campaign_id: int, campaign: CampaignUpdate, db: Session = De
     return db_campaign
 
 
-@router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
     db_campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
     if not db_campaign:
@@ -55,4 +55,3 @@ def delete_campaign(campaign_id: int, db: Session = Depends(get_db)):
     db.delete(db_campaign)
     db.commit()
     return None
-

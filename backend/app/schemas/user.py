@@ -5,22 +5,17 @@ from typing import Optional
 
 class UserBase(BaseModel):
     email: EmailStr
-    full_name: Optional[str] = None
+    role: Optional[str] = "field"
 
 
 class UserCreate(UserBase):
     password: str
 
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class UserResponse(UserBase):
+class UserRead(UserBase):
     id: int
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -33,4 +28,3 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-

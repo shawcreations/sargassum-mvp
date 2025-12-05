@@ -1,14 +1,13 @@
-from .user import UserCreate, UserResponse, UserLogin, Token, TokenData
-from .beach import BeachCreate, BeachUpdate, BeachResponse
-from .campaign import CampaignCreate, CampaignUpdate, CampaignResponse
-from .task import TaskCreate, TaskUpdate, TaskResponse
-from .ai import ChatMessage, ChatResponse
+from .user import UserBase, UserCreate, UserRead, Token, TokenData
+from .beach import BeachBase, BeachCreate, BeachRead, BeachUpdate
+from .campaign import CampaignBase, CampaignCreate, CampaignRead, CampaignUpdate
+from .task import TaskBase, TaskCreate, TaskRead, TaskUpdate
+from .ai import ChatRequest, ChatResponse
 
 __all__ = [
-    "UserCreate", "UserResponse", "UserLogin", "Token", "TokenData",
-    "BeachCreate", "BeachUpdate", "BeachResponse",
-    "CampaignCreate", "CampaignUpdate", "CampaignResponse",
-    "TaskCreate", "TaskUpdate", "TaskResponse",
-    "ChatMessage", "ChatResponse"
+    "UserBase", "UserCreate", "UserRead", "Token", "TokenData",
+    "BeachBase", "BeachCreate", "BeachRead", "BeachUpdate",
+    "CampaignBase", "CampaignCreate", "CampaignRead", "CampaignUpdate",
+    "TaskBase", "TaskCreate", "TaskRead", "TaskUpdate",
+    "ChatRequest", "ChatResponse"
 ]
-

@@ -25,15 +25,15 @@ class AuthService:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=15)
+            expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
 
     @staticmethod
     def decode_token(token: str) -> Optional[TokenData]:
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
             email: str = payload.get("sub")
             if email is None:
                 return None
@@ -51,7 +51,7 @@ class AuthService:
         db_user = User(
             email=user.email,
             hashed_password=hashed_password,
-            full_name=user.full_name
+            role=user.role
         )
         db.add(db_user)
         db.commit()
@@ -66,4 +66,3 @@ class AuthService:
         if not AuthService.verify_password(password, user.hashed_password):
             return None
         return user
-

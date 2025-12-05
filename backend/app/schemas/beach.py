@@ -5,12 +5,11 @@ from typing import Optional
 
 class BeachBase(BaseModel):
     name: str
-    description: Optional[str] = None
+    island: Optional[str] = None
     latitude: float
     longitude: float
-    region: Optional[str] = None
-    country: Optional[str] = "Saint Vincent and the Grenadines"
-    risk_level: Optional[str] = "low"
+    tourism_importance: Optional[int] = 0
+    notes: Optional[str] = None
 
 
 class BeachCreate(BeachBase):
@@ -19,18 +18,16 @@ class BeachCreate(BeachBase):
 
 class BeachUpdate(BaseModel):
     name: Optional[str] = None
-    description: Optional[str] = None
+    island: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
-    region: Optional[str] = None
-    risk_level: Optional[str] = None
+    tourism_importance: Optional[int] = None
+    notes: Optional[str] = None
 
 
-class BeachResponse(BeachBase):
+class BeachRead(BeachBase):
     id: int
-    last_survey_date: Optional[datetime] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
-

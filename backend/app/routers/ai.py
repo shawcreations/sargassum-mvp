@@ -1,19 +1,16 @@
 from fastapi import APIRouter
-from ..schemas.ai import ChatMessage, ChatResponse
+from ..schemas.ai import ChatRequest, ChatResponse
 from ..services.ai import AIService
 
-router = APIRouter(prefix="/ai", tags=["AI Assistant"])
+router = APIRouter(tags=["AI Assistant"])
 
 
-@router.post("/chat", response_model=ChatResponse)
-def chat(message: ChatMessage):
+@router.post("/ai/chat", response_model=ChatResponse)
+def chat(request: ChatRequest):
     """
-    AI Chat endpoint - stub implementation.
+    AI Chat endpoint.
     Accepts user messages and returns AI-generated responses.
+    Uses OpenAI if OPENAI_API_KEY is set, otherwise returns a stub.
     """
-    result = AIService.generate_response(
-        message=message.message,
-        conversation_id=message.conversation_id
-    )
-    return ChatResponse(**result)
-
+    response = AIService.generate_response(message=request.message)
+    return ChatResponse(assistant=response)
