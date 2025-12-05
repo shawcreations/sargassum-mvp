@@ -3,7 +3,19 @@
  */
 
 export function getApiBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  // In browser, use relative URL to go through nginx proxy
+  // This avoids CORS issues and works regardless of the server IP
+  if (typeof window !== 'undefined') {
+    // Check if we have an explicit API URL set
+    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (envUrl && envUrl !== 'http://localhost:8000') {
+      return envUrl;
+    }
+    // Use relative URL (goes through nginx on same origin)
+    return '';
+  }
+  // Server-side, use the configured URL or default
+  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://backend:8000';
 }
 
 async function fetchAPI(endpoint, options = {}) {
@@ -129,4 +141,3 @@ export async function sendChatMessage(message) {
     body: JSON.stringify({ message }),
   });
 }
-
