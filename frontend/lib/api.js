@@ -3,24 +3,27 @@
  */
 
 export function getApiBaseUrl() {
-  // In browser, use relative URL to go through nginx proxy
-  // This avoids CORS issues and works regardless of the server IP
-  if (typeof window !== 'undefined') {
-    // Check if we have an explicit API URL set
-    const envUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (envUrl && envUrl !== 'http://localhost:8000') {
-      return envUrl;
-    }
-    // Use relative URL (goes through nginx on same origin)
-    return '';
+  // Check for explicitly set API URL
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
   }
-  // Server-side, use the configured URL or default
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://backend:8000';
+  
+  // In browser, construct URL based on current host
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // Use port 8000 for the backend API
+    return `http://${host}:8000`;
+  }
+  
+  // Server-side default
+  return 'http://backend:8000';
 }
 
 async function fetchAPI(endpoint, options = {}) {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}${endpoint}`;
+  
+  console.log('Fetching:', url); // Debug log
   
   const defaultHeaders = {
     'Content-Type': 'application/json',
