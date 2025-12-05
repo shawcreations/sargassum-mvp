@@ -10,6 +10,7 @@ export default function AIAssistantPage() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -50,25 +51,39 @@ export default function AIAssistantPage() {
     'Best practices for sargassum disposal?',
   ];
 
+  const handleSuggestion = (question) => {
+    setInput(question);
+    setShowSidebar(false);
+  };
+
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-white">AI Assistant</h1>
-        <p className="text-slate-400 mt-1">Get help with sargassum management operations</p>
+    <div className="h-[calc(100vh-140px)] md:h-[calc(100vh-120px)] flex flex-col">
+      <div className="mb-3 md:mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="page-title">AI Assistant</h1>
+          <p className="page-subtitle hidden sm:block">Get help with sargassum management</p>
+        </div>
+        {/* Mobile toggle for suggestions */}
+        <button
+          onClick={() => setShowSidebar(!showSidebar)}
+          className="lg:hidden btn-secondary text-xs"
+        >
+          {showSidebar ? 'Hide Tips' : 'Show Tips'}
+        </button>
       </div>
 
-      <div className="flex-1 flex gap-6 min-h-0">
+      <div className="flex-1 flex gap-4 md:gap-6 min-h-0 relative">
         {/* Chat Area */}
         <div className="flex-1 card flex flex-col p-0 overflow-hidden">
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-4">
             {messages.map((message, index) => (
               <div
                 key={index}
                 className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] p-4 rounded-2xl ${
+                  className={`max-w-[90%] md:max-w-[80%] p-3 md:p-4 rounded-2xl ${
                     message.role === 'user'
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-700 text-slate-100'
@@ -81,7 +96,7 @@ export default function AIAssistantPage() {
 
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-slate-700 p-4 rounded-2xl">
+                <div className="bg-slate-700 p-3 md:p-4 rounded-2xl">
                   <div className="flex gap-2">
                     <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -95,8 +110,8 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-slate-700">
-            <form onSubmit={handleSubmit} className="flex gap-3">
+          <div className="p-3 md:p-4 border-t border-slate-700">
+            <form onSubmit={handleSubmit} className="flex gap-2 md:gap-3">
               <input
                 type="text"
                 value={input}
@@ -108,7 +123,7 @@ export default function AIAssistantPage() {
               <button
                 type="submit"
                 disabled={!input.trim() || loading}
-                className="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary px-4 md:px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Send
               </button>
@@ -116,60 +131,73 @@ export default function AIAssistantPage() {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="w-80 space-y-4">
-          {/* Suggested Questions */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              Suggested Questions
-            </h3>
-            <div className="space-y-2">
-              {suggestedQuestions.map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => setInput(question)}
-                  className="w-full text-left text-sm text-slate-300 hover:text-white p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
-                >
-                  {question}
-                </button>
-              ))}
+        {/* Sidebar - Desktop always visible, Mobile toggleable */}
+        <div className={`
+          ${showSidebar ? 'fixed inset-0 z-50 bg-black/50 lg:relative lg:bg-transparent' : 'hidden lg:block'}
+        `} onClick={(e) => e.target === e.currentTarget && setShowSidebar(false)}>
+          <div className={`
+            ${showSidebar ? 'absolute right-0 top-0 h-full w-72 bg-slate-900 p-4 overflow-y-auto' : ''}
+            lg:relative lg:w-72 xl:w-80 space-y-4 lg:space-y-4
+          `}>
+            {/* Mobile close button */}
+            {showSidebar && (
+              <button
+                onClick={() => setShowSidebar(false)}
+                className="lg:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            )}
+
+            {/* Suggested Questions */}
+            <div className="card">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                Suggested Questions
+              </h3>
+              <div className="space-y-2">
+                {suggestedQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestion(question)}
+                    className="w-full text-left text-xs md:text-sm text-slate-300 hover:text-white p-2 md:p-3 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Capabilities */}
-          <div className="card">
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              What I Can Help With
-            </h3>
-            <ul className="space-y-2 text-sm text-slate-400">
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
-                <span>Plan and optimize cleanup campaigns</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
-                <span>Analyze sargassum patterns and trends</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
-                <span>Coordinate team assignments</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
-                <span>Provide best practices guidance</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-emerald-400 mt-1">•</span>
-                <span>Generate reports and summaries</span>
-              </li>
-            </ul>
-          </div>
+            {/* Capabilities */}
+            <div className="card">
+              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                What I Can Help With
+              </h3>
+              <ul className="space-y-2 text-xs md:text-sm text-slate-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">•</span>
+                  <span>Plan and optimize cleanup campaigns</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">•</span>
+                  <span>Analyze sargassum patterns and trends</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">•</span>
+                  <span>Coordinate team assignments</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-emerald-400 mt-0.5">•</span>
+                  <span>Provide best practices guidance</span>
+                </li>
+              </ul>
+            </div>
 
-          {/* Status */}
-          <div className="card">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-              <span className="text-sm text-slate-400">AI Assistant Online</span>
+            {/* Status */}
+            <div className="card">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                <span className="text-xs md:text-sm text-slate-400">AI Assistant Online</span>
+              </div>
             </div>
           </div>
         </div>
@@ -177,4 +205,3 @@ export default function AIAssistantPage() {
     </div>
   );
 }
-
