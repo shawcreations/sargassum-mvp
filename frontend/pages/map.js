@@ -20,18 +20,18 @@ export default function MapPage() {
   const [selectedBeach, setSelectedBeach] = useState(null);
   const [riskHistory, setRiskHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
   async function loadData() {
-    setLoading(true);
+    setRefreshing(true);
     setError(null);
     try {
-      console.log('Loading beach data...');
-      
       const [beachData, highRisk] = await Promise.all([
         fetchBeaches().catch(err => {
           console.error('Failed to fetch beaches:', err);
@@ -43,8 +43,8 @@ export default function MapPage() {
         })
       ]);
       
-      console.log('Beach data:', beachData);
-      console.log('High risk data:', highRisk);
+      console.log('Loaded beaches:', beachData?.length || 0);
+      console.log('Loaded risk entries:', highRisk?.beaches?.length || 0);
       
       setBeaches(beachData || []);
       
@@ -53,13 +53,14 @@ export default function MapPage() {
       (highRisk.beaches || []).forEach(b => {
         riskLookup[b.beach_id] = b.risk_level;
       });
-      console.log('Risk lookup:', riskLookup);
       setRiskData(riskLookup);
+      setLastUpdate(new Date().toLocaleTimeString());
     } catch (error) {
       console.error('Failed to load data:', error);
       setError(error.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -92,18 +93,38 @@ export default function MapPage() {
     }
   };
 
+  // Count risk levels
+  const riskCounts = {
+    high: Object.values(riskData).filter(r => r === 3).length,
+    medium: Object.values(riskData).filter(r => r === 2).length,
+    low: Object.values(riskData).filter(r => r <= 1).length,
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Beach Map</h1>
-          <p className="page-subtitle">View beaches and current risk levels</p>
+          <p className="page-subtitle">
+            {beaches.length > 0 
+              ? `Showing ${beaches.length} beaches` 
+              : 'View beaches and current risk levels'}
+            {lastUpdate && <span className="text-xs ml-2">• Updated {lastUpdate}</span>}
+          </p>
         </div>
         <button 
           onClick={loadData}
-          className="btn-secondary text-sm"
+          disabled={refreshing}
+          className="btn-secondary text-sm flex items-center gap-2"
         >
-          🔄 Refresh Data
+          {refreshing ? (
+            <>
+              <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              Loading...
+            </>
+          ) : (
+            <>🔄 Refresh Data</>
+          )}
         </button>
       </div>
 
@@ -119,15 +140,15 @@ export default function MapPage() {
           <span className="text-sm text-slate-400">Risk Level:</span>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#ef4444' }}></div>
-            <span className="text-sm text-slate-300">High</span>
+            <span className="text-sm text-slate-300">High ({riskCounts.high})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#f59e0b' }}></div>
-            <span className="text-sm text-slate-300">Medium</span>
+            <span className="text-sm text-slate-300">Medium ({riskCounts.medium})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#22c55e' }}></div>
-            <span className="text-sm text-slate-300">Low</span>
+            <span className="text-sm text-slate-300">Low ({riskCounts.low})</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#6b7280' }}></div>
@@ -139,11 +160,14 @@ export default function MapPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Map */}
         <div className="lg:col-span-2 card p-0 overflow-hidden" style={{ height: '500px' }}>
-          <MapView 
-            beaches={beaches} 
-            riskData={riskData}
-            onBeachSelect={handleBeachSelect}
-          />
+          {!loading && (
+            <MapView 
+              key={`map-${beaches.length}-${Object.keys(riskData).length}`}
+              beaches={beaches} 
+              riskData={riskData}
+              onBeachSelect={handleBeachSelect}
+            />
+          )}
         </div>
 
         {/* Beach Details Sidebar */}
@@ -180,7 +204,7 @@ export default function MapPage() {
                         key={i}
                         className="flex-1 rounded-t"
                         style={{ 
-                          height: `${(day.risk_level / 3) * 100}%`,
+                          height: `${Math.max((day.risk_level / 3) * 100, 10)}%`,
                           backgroundColor: getRiskColor(day.risk_level),
                           minHeight: '4px'
                         }}
@@ -216,21 +240,15 @@ export default function MapPage() {
           <p className="text-xs md:text-sm text-slate-400 mt-1">Total Beaches</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-red-400">
-            {Object.values(riskData).filter(r => r === 3).length}
-          </p>
+          <p className="text-2xl font-bold text-red-400">{riskCounts.high}</p>
           <p className="text-xs md:text-sm text-slate-400 mt-1">High Risk</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-yellow-400">
-            {Object.values(riskData).filter(r => r === 2).length}
-          </p>
+          <p className="text-2xl font-bold text-yellow-400">{riskCounts.medium}</p>
           <p className="text-xs md:text-sm text-slate-400 mt-1">Medium Risk</p>
         </div>
         <div className="card text-center">
-          <p className="text-2xl font-bold text-emerald-400">
-            {Object.values(riskData).filter(r => r <= 1).length}
-          </p>
+          <p className="text-2xl font-bold text-emerald-400">{riskCounts.low}</p>
           <p className="text-xs md:text-sm text-slate-400 mt-1">Low/None</p>
         </div>
       </div>
