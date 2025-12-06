@@ -6,6 +6,40 @@ from ..models.beach_daily_risk import BeachDailyRisk
 from ..models.alert import Alert
 
 
+# Sample beaches to seed if none exist
+SAMPLE_BEACHES = [
+    {"name": "Kingstown Beach", "island": "St. Vincent", "latitude": 13.1561, "longitude": -61.2278, "tourism_importance": 4},
+    {"name": "Villa Beach", "island": "St. Vincent", "latitude": 13.1474, "longitude": -61.1982, "tourism_importance": 5},
+    {"name": "Indian Bay", "island": "St. Vincent", "latitude": 13.1444, "longitude": -61.1936, "tourism_importance": 4},
+    {"name": "Young Island", "island": "St. Vincent", "latitude": 13.1330, "longitude": -61.1950, "tourism_importance": 5},
+    {"name": "Brighton Beach", "island": "St. Vincent", "latitude": 13.1611, "longitude": -61.2447, "tourism_importance": 3},
+    {"name": "Questelles Beach", "island": "St. Vincent", "latitude": 13.1841, "longitude": -61.2569, "tourism_importance": 2},
+    {"name": "Layou Beach", "island": "St. Vincent", "latitude": 13.2089, "longitude": -61.2636, "tourism_importance": 3},
+    {"name": "Barrouallie Beach", "island": "St. Vincent", "latitude": 13.2366, "longitude": -61.2656, "tourism_importance": 2},
+    {"name": "Princess Margaret Beach", "island": "Bequia", "latitude": 13.0036, "longitude": -61.2419, "tourism_importance": 5},
+    {"name": "Lower Bay Beach", "island": "Bequia", "latitude": 13.0005, "longitude": -61.2364, "tourism_importance": 4},
+]
+
+
+def seed_beaches_if_empty(db: Session) -> int:
+    """
+    Seed sample beaches if the database is empty.
+    Returns the number of beaches created.
+    """
+    existing = db.query(Beach).count()
+    if existing > 0:
+        return 0
+    
+    created = 0
+    for beach_data in SAMPLE_BEACHES:
+        beach = Beach(**beach_data)
+        db.add(beach)
+        created += 1
+    
+    db.commit()
+    return created
+
+
 def generate_synthetic_risk(beach_id: int, target_date: date) -> dict:
     """
     Generate synthetic risk data for a beach.
@@ -114,7 +148,11 @@ def update_beach_risk_for_date(db: Session, target_date: date) -> dict:
 def simulate_historical_data(db: Session, days: int = 14) -> dict:
     """
     Generate synthetic historical risk data for the past N days.
+    Also seeds beaches if none exist.
     """
+    # First, ensure we have beaches
+    beaches_created = seed_beaches_if_empty(db)
+    
     today = date.today()
     total_updated = 0
     total_alerts = 0
@@ -127,7 +165,7 @@ def simulate_historical_data(db: Session, days: int = 14) -> dict:
     
     return {
         "days_processed": days,
+        "beaches_created": beaches_created,
         "total_records_created": total_updated,
         "total_alerts_created": total_alerts
     }
-

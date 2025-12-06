@@ -1,8 +1,9 @@
 from typing import List, Optional
 from datetime import date, timedelta
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
+from sqlalchemy import text
+from ..database import get_db, Base, engine
 from ..schemas.beach_risk import BeachRiskHistory, RiskDataPoint, HighRiskBeach
 from ..schemas.alert import AlertRead
 from ..services.risk_helpers import (
@@ -97,13 +98,21 @@ def simulate_risk_ingestion(
     """
     DEV ONLY: Generate synthetic risk data for testing.
     Simulates satellite data ingestion for the past N days.
+    Also creates sample beaches if none exist.
     """
-    result = simulate_historical_data(db, days)
-    return {
-        "status": "success",
-        "message": f"Simulated {days} days of risk data",
-        **result
-    }
+    try:
+        # Ensure tables exist
+        Base.metadata.create_all(bind=engine)
+        
+        result = simulate_historical_data(db, days)
+        return {
+            "status": "success",
+            "message": f"Simulated {days} days of risk data",
+            **result
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to simulate data: {str(e)}")
 
 
 @router.post("/risk/update-today")
@@ -111,9 +120,24 @@ def update_today_risk(db: Session = Depends(get_db)):
     """
     DEV ONLY: Update risk data for today.
     """
-    result = update_beach_risk_for_date(db, date.today())
-    return {
-        "status": "success",
-        **result
-    }
+    try:
+        result = update_beach_risk_for_date(db, date.today())
+        return {
+            "status": "success",
+            **result
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update: {str(e)}")
 
+
+@router.post("/risk/init-tables")
+def init_tables(db: Session = Depends(get_db)):
+    """
+    DEV ONLY: Initialize database tables.
+    """
+    try:
+        Base.metadata.create_all(bind=engine)
+        return {"status": "success", "message": "Tables created"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create tables: {str(e)}")

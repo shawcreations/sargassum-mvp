@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -15,6 +16,7 @@ export default function Dashboard() {
 
   async function loadData() {
     setLoading(true);
+    setError(null);
     try {
       const [beachData, riskData, highRisk, alertData] = await Promise.all([
         fetchBeaches().catch(() => []),
@@ -37,11 +39,18 @@ export default function Dashboard() {
 
   async function handleSimulateData() {
     setSimulating(true);
+    setError(null);
     try {
-      await simulateRiskIngestion(14);
+      console.log('Starting data simulation...');
+      const result = await simulateRiskIngestion(14);
+      console.log('Simulation result:', result);
+      
+      // Wait a moment then reload data
+      await new Promise(resolve => setTimeout(resolve, 500));
       await loadData();
     } catch (error) {
       console.error('Failed to simulate data:', error);
+      setError(`Failed to generate data: ${error.message}`);
     } finally {
       setSimulating(false);
     }
@@ -61,6 +70,8 @@ export default function Dashboard() {
     }
   };
 
+  const needsData = !riskSummary || riskSummary.total_beaches === 0;
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -68,16 +79,30 @@ export default function Dashboard() {
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">Sargassum monitoring overview</p>
         </div>
-        {(!riskSummary || riskSummary.total_beaches === 0) && (
+        {needsData && (
           <button 
             onClick={handleSimulateData}
             disabled={simulating}
-            className="btn-secondary text-sm"
+            className="btn-primary text-sm flex items-center gap-2"
           >
-            {simulating ? 'Generating...' : '🔄 Generate Sample Data'}
+            {simulating ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                Generating...
+              </>
+            ) : (
+              <>🔄 Generate Sample Data</>
+            )}
           </button>
         )}
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="card bg-red-900/20 border-red-800">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Risk Overview KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
