@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
-from .routers import auth_router, beaches_router, campaigns_router, tasks_router, ai_router
+from .routers import (
+    auth_router, beaches_router, campaigns_router, 
+    tasks_router, ai_router, risk_router, sat_layers_router
+)
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -37,3 +40,5 @@ app.include_router(beaches_router, prefix="/api")
 app.include_router(campaigns_router, prefix="/api")
 app.include_router(tasks_router, prefix="/api")
 app.include_router(ai_router, prefix="/api")
+app.include_router(risk_router, prefix="/api")
+app.include_router(sat_layers_router, prefix="/api")

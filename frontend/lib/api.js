@@ -23,8 +23,6 @@ async function fetchAPI(endpoint, options = {}) {
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}${endpoint}`;
   
-  console.log('Fetching:', url); // Debug log
-  
   const defaultHeaders = {
     'Content-Type': 'application/json',
   };
@@ -142,5 +140,34 @@ export async function sendChatMessage(message) {
   return fetchAPI('/api/ai/chat', {
     method: 'POST',
     body: JSON.stringify({ message }),
+  });
+}
+
+// Risk API
+export async function fetchRiskSummary(date = null) {
+  const params = date ? `?target_date=${date}` : '';
+  return fetchAPI(`/api/risk/summary${params}`);
+}
+
+export async function fetchHighRiskBeaches(date = null, minRiskLevel = 2) {
+  let params = `?min_risk_level=${minRiskLevel}`;
+  if (date) params += `&target_date=${date}`;
+  return fetchAPI(`/api/risk/high${params}`);
+}
+
+export async function fetchBeachRiskHistory(beachId, startDate = null, endDate = null) {
+  let params = '';
+  if (startDate) params += `?start_date=${startDate}`;
+  if (endDate) params += `${params ? '&' : '?'}end_date=${endDate}`;
+  return fetchAPI(`/api/risk/beach/${beachId}${params}`);
+}
+
+export async function fetchAlerts(limit = 20, activeOnly = true) {
+  return fetchAPI(`/api/alerts?limit=${limit}&active_only=${activeOnly}`);
+}
+
+export async function simulateRiskIngestion(days = 14) {
+  return fetchAPI(`/api/risk/simulate-ingestion?days=${days}`, {
+    method: 'POST',
   });
 }

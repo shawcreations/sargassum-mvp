@@ -16,27 +16,44 @@ const sampleBeaches = [
   { id: 10, name: 'Lower Bay Beach', latitude: 13.0005, longitude: -61.2364, island: 'Bequia', tourism_importance: 4 },
 ];
 
-function getColorByImportance(importance) {
-  if (importance >= 5) return '#ef4444'; // red - critical
-  if (importance >= 4) return '#f97316'; // orange - high
-  if (importance >= 3) return '#eab308'; // yellow - medium
-  return '#22c55e'; // green - low
+function getRiskColor(riskLevel) {
+  switch(riskLevel) {
+    case 3: return '#ef4444'; // red - high
+    case 2: return '#f59e0b'; // orange - medium
+    case 1: return '#22c55e'; // green - low
+    default: return '#6b7280'; // gray - no data
+  }
 }
 
-export default function MapView({ beaches }) {
-  const [data, setData] = useState(beaches || sampleBeaches);
+function getRiskLabel(riskLevel) {
+  switch(riskLevel) {
+    case 3: return 'High Risk';
+    case 2: return 'Medium Risk';
+    case 1: return 'Low Risk';
+    default: return 'No Data';
+  }
+}
+
+export default function MapView({ beaches, riskData = {}, onBeachSelect }) {
+  const [data, setData] = useState(beaches?.length > 0 ? beaches : sampleBeaches);
 
   useEffect(() => {
-    if (beaches) {
+    if (beaches?.length > 0) {
       setData(beaches);
     }
   }, [beaches]);
+
+  const handleMarkerClick = (beach) => {
+    if (onBeachSelect) {
+      onBeachSelect(beach);
+    }
+  };
 
   return (
     <MapContainer
       center={[13.15, -61.20]}
       zoom={11}
-      style={{ height: '100%', width: '100%', minHeight: '500px' }}
+      style={{ height: '100%', width: '100%', minHeight: '400px' }}
       className="rounded-lg"
     >
       <TileLayer
@@ -44,39 +61,60 @@ export default function MapView({ beaches }) {
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
 
-      {data.map((beach) => (
-        <CircleMarker
-          key={beach.id}
-          center={[beach.latitude, beach.longitude]}
-          radius={10}
-          fillColor={getColorByImportance(beach.tourism_importance)}
-          fillOpacity={0.8}
-          color={getColorByImportance(beach.tourism_importance)}
-          weight={2}
-        >
-          <Popup>
-            <div className="min-w-[180px]">
-              <h3 className="font-bold text-base mb-1">{beach.name}</h3>
-              <p className="text-sm text-slate-300 mb-2">{beach.island}</p>
-              <div className="text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Tourism Priority:</span>
-                  <span className="font-medium">{beach.tourism_importance}/5</span>
+      {data.map((beach) => {
+        const riskLevel = riskData[beach.id] ?? null;
+        const color = getRiskColor(riskLevel);
+        
+        return (
+          <CircleMarker
+            key={beach.id}
+            center={[beach.latitude, beach.longitude]}
+            radius={12}
+            fillColor={color}
+            fillOpacity={0.8}
+            color={color}
+            weight={2}
+            eventHandlers={{
+              click: () => handleMarkerClick(beach)
+            }}
+          >
+            <Popup>
+              <div className="min-w-[180px]">
+                <h3 className="font-bold text-base mb-1">{beach.name}</h3>
+                <p className="text-sm text-slate-300 mb-2">{beach.island}</p>
+                
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-slate-400">Risk:</span>
+                  <span 
+                    className="px-2 py-0.5 rounded text-xs font-medium"
+                    style={{ 
+                      backgroundColor: `${color}33`,
+                      color: color
+                    }}
+                  >
+                    {getRiskLabel(riskLevel)}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Lat:</span>
-                  <span>{beach.latitude.toFixed(4)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Lng:</span>
-                  <span>{beach.longitude.toFixed(4)}</span>
+                
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Tourism Priority:</span>
+                    <span>{beach.tourism_importance}/5</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Lat:</span>
+                    <span>{beach.latitude.toFixed(4)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Lng:</span>
+                    <span>{beach.longitude.toFixed(4)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </Popup>
-        </CircleMarker>
-      ))}
+            </Popup>
+          </CircleMarker>
+        );
+      })}
     </MapContainer>
   );
 }
-
