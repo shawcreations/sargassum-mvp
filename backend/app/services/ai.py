@@ -1,4 +1,5 @@
 from ..config import settings
+import httpx
 
 
 class AIService:
@@ -17,7 +18,12 @@ class AIService:
         try:
             from openai import OpenAI
             
-            client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            # Create client without proxy settings
+            http_client = httpx.Client()
+            client = OpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                http_client=http_client
+            )
             
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -37,5 +43,7 @@ class AIService:
             
             return response.choices[0].message.content
             
+        except ImportError:
+            return "OpenAI library is not installed. Please install it with: pip install openai"
         except Exception as e:
             return f"Error calling OpenAI API: {str(e)}"
