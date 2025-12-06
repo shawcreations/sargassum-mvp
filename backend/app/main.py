@@ -1,37 +1,36 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .config import settings
+from .database import init_db
 from .routers import (
-    auth_router, beaches_router, campaigns_router, 
-    tasks_router, ai_router, risk_router, sat_layers_router
+    auth_router,
+    beaches_router, 
+    campaigns_router,
+    tasks_router,
+    ai_router,
+    risk_router,
+    sat_layers_router
 )
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    description="API for Sargassum monitoring and cleanup management - Vincy GreenRoots",
-    version="1.0.0"
-)
+app = FastAPI(title="Sargassum MVP API")
 
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+@app.on_event("startup")
+def startup_event():
+    """Initialize database on startup."""
+    init_db()
+
+
 @app.get("/")
 def root():
-    return {
-        "status": "OK",
-        "message": "Sargassum MVP API Running"
-    }
-
-
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+    return {"status": "OK", "message": "Sargassum MVP API Running"}
 
 
 # Include routers with /api prefix

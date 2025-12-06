@@ -20,31 +20,48 @@ export default function MapPage() {
   const [selectedBeach, setSelectedBeach] = useState(null);
   const [riskHistory, setRiskHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [beachData, highRisk] = await Promise.all([
-          fetchBeaches().catch(() => []),
-          fetchHighRiskBeaches(null, 1).catch(() => ({ beaches: [] }))
-        ]);
-        
-        setBeaches(beachData);
-        
-        // Build risk lookup by beach_id
-        const riskLookup = {};
-        (highRisk.beaches || []).forEach(b => {
-          riskLookup[b.beach_id] = b.risk_level;
-        });
-        setRiskData(riskLookup);
-      } catch (error) {
-        console.error('Failed to load data:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
   }, []);
+
+  async function loadData() {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log('Loading beach data...');
+      
+      const [beachData, highRisk] = await Promise.all([
+        fetchBeaches().catch(err => {
+          console.error('Failed to fetch beaches:', err);
+          return [];
+        }),
+        fetchHighRiskBeaches(null, 0).catch(err => {
+          console.error('Failed to fetch risk data:', err);
+          return { beaches: [] };
+        })
+      ]);
+      
+      console.log('Beach data:', beachData);
+      console.log('High risk data:', highRisk);
+      
+      setBeaches(beachData || []);
+      
+      // Build risk lookup by beach_id
+      const riskLookup = {};
+      (highRisk.beaches || []).forEach(b => {
+        riskLookup[b.beach_id] = b.risk_level;
+      });
+      console.log('Risk lookup:', riskLookup);
+      setRiskData(riskLookup);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleBeachSelect(beach) {
     setSelectedBeach(beach);
@@ -82,7 +99,19 @@ export default function MapPage() {
           <h1 className="page-title">Beach Map</h1>
           <p className="page-subtitle">View beaches and current risk levels</p>
         </div>
+        <button 
+          onClick={loadData}
+          className="btn-secondary text-sm"
+        >
+          🔄 Refresh Data
+        </button>
       </div>
+
+      {error && (
+        <div className="card bg-red-900/20 border-red-800">
+          <p className="text-red-400 text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="card py-3">
@@ -183,7 +212,7 @@ export default function MapPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <div className="card text-center">
-          <p className="text-2xl font-bold text-white">{beaches.length}</p>
+          <p className="text-2xl font-bold text-white">{beaches.length || '—'}</p>
           <p className="text-xs md:text-sm text-slate-400 mt-1">Total Beaches</p>
         </div>
         <div className="card text-center">

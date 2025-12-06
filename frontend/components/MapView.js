@@ -1,8 +1,7 @@
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
-import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-// Sample beaches data - will be replaced with API data
+// Sample beaches data as fallback
 const sampleBeaches = [
   { id: 1, name: 'Kingstown Beach', latitude: 13.1561, longitude: -61.2278, island: 'St. Vincent', tourism_importance: 4 },
   { id: 2, name: 'Villa Beach', latitude: 13.1474, longitude: -61.1982, island: 'St. Vincent', tourism_importance: 5 },
@@ -34,14 +33,9 @@ function getRiskLabel(riskLevel) {
   }
 }
 
-export default function MapView({ beaches, riskData = {}, onBeachSelect }) {
-  const [data, setData] = useState(beaches?.length > 0 ? beaches : sampleBeaches);
-
-  useEffect(() => {
-    if (beaches?.length > 0) {
-      setData(beaches);
-    }
-  }, [beaches]);
+export default function MapView({ beaches = [], riskData = {}, onBeachSelect }) {
+  // Use beaches from props, or fallback to sample data
+  const displayBeaches = beaches && beaches.length > 0 ? beaches : sampleBeaches;
 
   const handleMarkerClick = (beach) => {
     if (onBeachSelect) {
@@ -61,7 +55,7 @@ export default function MapView({ beaches, riskData = {}, onBeachSelect }) {
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
 
-      {data.map((beach) => {
+      {displayBeaches.map((beach) => {
         const riskLevel = riskData[beach.id] ?? null;
         const color = getRiskColor(riskLevel);
         
@@ -103,11 +97,11 @@ export default function MapView({ beaches, riskData = {}, onBeachSelect }) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Lat:</span>
-                    <span>{beach.latitude.toFixed(4)}</span>
+                    <span>{beach.latitude?.toFixed(4)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Lng:</span>
-                    <span>{beach.longitude.toFixed(4)}</span>
+                    <span>{beach.longitude?.toFixed(4)}</span>
                   </div>
                 </div>
               </div>
